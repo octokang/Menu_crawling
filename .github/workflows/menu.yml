@@ -2,19 +2,17 @@ name: 밥짓는 부엌 메뉴 & 날씨 알림
 
 on:
   schedule:
-    - cron: '30 1 * * 1-5'   # UTC 01:30 = KST 10:30, 월~금만 실행
-  workflow_dispatch:            # 수동 실행 (테스트용)
+    - cron: '30 1 * * 1-5'   # UTC 01:30 = KST 10:30, 월~금
+  workflow_dispatch:
 
 jobs:
   post-menu:
     runs-on: ubuntu-22.04
 
     steps:
-      - name: 코드 체크아웃
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Python 설치
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
@@ -24,10 +22,10 @@ jobs:
           playwright install chromium
           playwright install-deps chromium
 
-      - name: 메뉴 & 날씨 수집 후 Slack 전송
+      - name: 실행
         env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-          KMA_API_KEY:       ${{ secrets.KMA_API_KEY }}
-          AIR_KOREA_API_KEY: ${{ secrets.AIR_KOREA_API_KEY }}
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          SLACK_WEBHOOK_URL:   ${{ secrets.SLACK_WEBHOOK_URL }}
+          OPENWEATHER_API_KEY: ${{ secrets.OPENWEATHER_API_KEY }}
+          KMA_API_KEY:         ${{ secrets.KMA_API_KEY }}
+          ANTHROPIC_API_KEY:   ${{ secrets.ANTHROPIC_API_KEY }}
         run: python scraper.py
