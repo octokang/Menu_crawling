@@ -1,6 +1,5 @@
 import asyncio
 import os
-import re
 from datetime import datetime
 from urllib.parse import urlparse, parse_qs, unquote
 import httpx
@@ -27,6 +26,13 @@ def extract_real_image_url(pstatic_url: str) -> str:
     return pstatic_url
 
 
+def is_weekend() -> bool:
+    """
+    오늘이 주말(토요일=5, 일요일=6)인지 확인합니다. (한국 시간 기준)
+    """
+    return datetime.now().weekday() >= 5
+
+
 def is_today(image_url: str) -> bool:
     """
     이미지 URL에 오늘 날짜(YYYYMMDD)가 포함되어 있는지 확인합니다.
@@ -41,6 +47,7 @@ async def fetch_todays_images() -> list[str]:
     네이버 지도 소식 피드에서 오늘 날짜의 이미지 URL 목록을 가져옵니다.
     """
     image_urls = []
+    seen_urls = set()  # 중복 제거용
 
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=True)
@@ -77,8 +84,12 @@ async def fetch_todays_images() -> list[str]:
             real_url = extract_real_image_url(src)
 
             if is_today(real_url):
-                image_urls.append(real_url)
-                print(f"  ✓ 오늘 이미지: {real_url}")
+                if real_url not in seen_urls:
+                    seen_urls.add(real_url)
+                    image_urls.append(real_url)
+                    print(f"  ✓ 오늘 이미지: {real_url}")
+                else:
+                    print(f"  ⚠ 중복 제외: {real_url[:80]}...")
             else:
                 print(f"  - 오늘 아님: {real_url[:80]}...")
 
@@ -138,6 +149,10 @@ async def post_to_slack(image_urls: list[str]):
 
 async def main():
     print(f"=== {STORE_NAME} 메뉴 알림 시작 ===")
+
+    if is_weekend():
+        print("📅 오늘은 주말이라 실행하지 않습니다.")
+        return
 
     if not SLACK_WEBHOOK_URL:
         print("❌ SLACK_WEBHOOK_URL 환경변수가 설정되지 않았습니다.")
