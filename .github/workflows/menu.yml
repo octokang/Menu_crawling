@@ -8,24 +8,20 @@ on:
 jobs:
   post-menu:
     runs-on: ubuntu-22.04
-
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-
       - name: 패키지 설치
         run: |
           pip install -r requirements.txt
           playwright install chromium
           playwright install-deps chromium
-
       - name: 실행
         env:
-          SLACK_WEBHOOK_URL:   ${{ secrets.SLACK_WEBHOOK_URL }}
-          OPENWEATHER_API_KEY: ${{ secrets.OPENWEATHER_API_KEY }}
-          KMA_API_KEY:         ${{ secrets.KMA_API_KEY }}
-          ANTHROPIC_API_KEY:   ${{ secrets.ANTHROPIC_API_KEY }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          KMA_API_KEY:       ${{ secrets.KMA_API_KEY }}
+          AIR_KOREA_API_KEY: ${{ secrets.AIR_KOREA_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: python scraper.py
