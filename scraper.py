@@ -125,7 +125,7 @@ async def fetch_weather() -> dict:
 # ─────────────────────────────────────────
 async def fetch_uv_index() -> str:
     date = datetime.now().strftime("%Y%m%d")
-    url  = "http://apis.data.go.kr/1360000/LivingWthrIdxServiceV4/getUVIdxV4"
+    url  = "http://apis.data.go.kr/1360000/LivingWthrIdxServiceV5/getUVIdxV5"
     params = {
         "serviceKey": KMA_API_KEY,
         "pageNo": 1, "numOfRows": 10, "dataType": "JSON",
@@ -135,7 +135,7 @@ async def fetch_uv_index() -> str:
     try:
         async with httpx.AsyncClient() as client:
             res = await client.get(url, params=params, timeout=10)
-        uv = res.json()["response"]["body"]["items"]["item"][0]["h12"]
+        uv = res.json()["response"]["body"]["items"]["item"][0]["h6"]
         print(f"[{datetime.now()}] 자외선 지수: {uv}")
         return str(uv)
     except Exception as e:
