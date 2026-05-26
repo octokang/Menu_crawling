@@ -1,10 +1,8 @@
 name: 밥짓는 부엌 메뉴 & 날씨 알림
-
 on:
   # schedule:
   #   - cron: '0 1 * * 1-5'   # UTC 01:30 = KST 10:30, 월~금
   workflow_dispatch:
-
 jobs:
   post-menu:
     runs-on: ubuntu-22.04
@@ -25,3 +23,13 @@ jobs:
           AIR_KOREA_API_KEY: ${{ secrets.AIR_KOREA_API_KEY }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: python scraper.py
+
+      # ↓ 아래 두 스텝 추가
+      - name: 디버그 파일 업로드 (실패 시)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: debug-output
+          path: |
+            debug_screenshot.png
+            debug_page.html
