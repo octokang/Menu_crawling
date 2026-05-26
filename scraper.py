@@ -72,13 +72,44 @@ async def fetch_todays_images() -> list:
         page = await context.new_page()
         print(f"[{datetime.now()}] 메뉴 페이지 로딩 중...")
         await page.goto(FEED_URL, wait_until="networkidle", timeout=30000)
-        await page.wait_for_selector("a.place_thumb", timeout=15000)
+
+        # ── 디버깅: 실제 HTML 저장 ──────────────────────
+        html = await page.content()
+        with open("debug_page.html", "w", encoding="utf-8") as f:
+            f.write(html)
+        await page.screenshot(path="debug_screenshot.png", full_page=True)
+        print(f"[{datetime.now()}] 디버그 파일 저장 완료")
+        # ────────────────────────────────────────────────
+
+        # 대체 셀렉터 순서대로 시도
+        SELECTORS = [
+            "a.place_thumb",
+            "a[class*='thumb']",
+            "div[class*='feed'] img",
+            "img[src*='pstatic.net']",
+        ]
+
+        found_selector = None
+        for sel in SELECTORS:
+            try:
+                await page.wait_for_selector(sel, timeout=7000)
+                found_selector = sel
+                print(f"[{datetime.now()}] ✅ 셀렉터 발견: {sel}")
+                break
+            except Exception:
+                print(f"[{datetime.now()}] ❌ 셀렉터 없음: {sel}")
+
+        if not found_selector:
+            print(f"[{datetime.now()}] ❌ 이미지 셀렉터를 찾지 못했습니다.")
+            await browser.close()
+            return []
 
         for _ in range(3):
             await page.evaluate("window.scrollBy(0, 800)")
             await asyncio.sleep(1)
 
-        img_elements = await page.query_selector_all("a.place_thumb img")
+        # 이미지는 img[src*='pstatic'] 로 넓게 수집
+        img_elements = await page.query_selector_all("img[src*='pstatic.net']")
         for img in img_elements:
             src = await img.get_attribute("src")
             if not src:
