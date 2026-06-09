@@ -66,7 +66,9 @@ async def fetch_todays_images() -> list:
                 "--no-sandbox",
                 "--disable-blink-features=AutomationControlled",
                 "--disable-dev-shm-usage",
+                "--disable-setuid-sandbox",
                 "--window-size=1920,1080",
+                "--lang=ko-KR",
             ],
         )
         context = await browser.new_context(
@@ -79,17 +81,27 @@ async def fetch_todays_images() -> list:
             viewport={"width": 1920, "height": 1080},
             extra_http_headers={
                 "Accept-Language": "ko-KR,ko;q=0.9,en-US;q=0.8",
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
             },
         )
+        # 봇 감지 우회: navigator 속성 전부 제거
         await context.add_init_script("""
+            delete Object.getPrototypeOf(navigator).webdriver;
             Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
-            Object.defineProperty(navigator, 'plugins', { get: () => [1, 2, 3] });
-            Object.defineProperty(navigator, 'languages', { get: () => ['ko-KR', 'ko'] });
+            Object.defineProperty(navigator, 'plugins', { get: () => [1, 2, 3, 4, 5] });
+            Object.defineProperty(navigator, 'languages', { get: () => ['ko-KR', 'ko', 'en-US'] });
+            Object.defineProperty(navigator, 'hardwareConcurrency', { get: () => 8 });
+            Object.defineProperty(navigator, 'deviceMemory', { get: () => 8 });
+            window.chrome = { runtime: {} };
         """)
         page = await context.new_page()
         print(f"[{datetime.now()}] 메뉴 페이지 로딩 중...")
-        await page.goto(FEED_URL, wait_until="networkidle", timeout=30000)
+        # 네이버 메인 먼저 방문해서 쿠키 확보
+        await page.goto("https://www.naver.com", wait_until="domcontentloaded", timeout=15000)
         await asyncio.sleep(2)
+        # 실제 타겟 페이지로 이동
+        await page.goto(FEED_URL, wait_until="networkidle", timeout=30000)
+        await asyncio.sleep(3)
 
         # HTML 저장 (디버깅용)
         html = await page.content()
