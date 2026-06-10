@@ -1,7 +1,7 @@
 name: 밥짓는 부엌 메뉴 & 날씨 알림
 on:
-  # schedule:
-  #   - cron: '0 1 * * 1-5'   # UTC 01:30 = KST 10:30, 월~금
+  schedule:
+    - cron: '10 1 * * 1-5'   # UTC 01:30 = KST 10:30, 월~금
   workflow_dispatch:
 jobs:
   post-menu:
